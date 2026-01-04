@@ -24,11 +24,10 @@ const ALLOWED_CHANNELS = new Set([
 ]);
 
 // Só é permitido enviar mensagens nestas horas (Lisboa)
-const ALLOWED_TIMES = new Set(["08:06", "19:03"]);
 const TIMEZONE = "Europe/Lisbon";
 
-// Usa a API de timezone para obter hora/minuto em Lisboa
-function getLisbonHHMM(date = new Date()) {
+// devolve minutos desde 00:00 em Lisboa
+function getLisbonMinutes(date = new Date()) {
   const parts = new Intl.DateTimeFormat("pt-PT", {
     timeZone: TIMEZONE,
     hour: "2-digit",
@@ -36,17 +35,29 @@ function getLisbonHHMM(date = new Date()) {
     hour12: false,
   }).formatToParts(date);
 
-  const hh = parts.find(p => p.type === "hour")?.value ?? "00";
-  const mm = parts.find(p => p.type === "minute")?.value ?? "00";
-  return `${hh}:${mm}`;
+  const hh = Number(parts.find(p => p.type === "hour")?.value ?? 0);
+  const mm = Number(parts.find(p => p.type === "minute")?.value ?? 0);
+
+  return hh * 60 + mm;
 }
 
 function shouldKeepMessage(message) {
-  // Não apagar mensagens fixadas (segurança)
+  // nunca apagar mensagens fixadas
   if (message.pinned) return true;
 
-  const hhmm = getLisbonHHMM(message.createdAt);
-  return ALLOWED_TIMES.has(hhmm);
+  const minutes = getLisbonMinutes(message.createdAt);
+
+  // intervalos permitidos (em minutos)
+  const morningStart = 8 * 60;        // 08:00
+  const morningEnd   = 8 * 60 + 10;   // 08:10
+
+  const eveningStart = 19 * 60;       // 19:00
+  const eveningEnd   = 19 * 60 + 10;  // 19:10
+
+  return (
+    (minutes >= morningStart && minutes <= morningEnd) ||
+    (minutes >= eveningStart && minutes <= eveningEnd)
+  );
 }
 
 async function safeDelete(message) {
