@@ -91,15 +91,7 @@ async function sweepChannel(channelId) {
   const messages = await channel.messages.fetch({ limit: 100 }).catch(() => null);
   if (!messages) return;
 
-  for (const msg of messages.values()) {
-    // opcional: não mexer em mensagens de bots
-    // se quiseres apagar também bots, remove este if
-
-    if (!shouldKeepMessage(msg)) {
-      await safeDelete(msg);
-    }
-  }
-}
+  for (const msg of messages.values())
 
 async function sweepAll() {
   for (const channelId of ALLOWED_CHANNELS) {
