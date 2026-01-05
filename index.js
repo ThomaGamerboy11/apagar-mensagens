@@ -73,10 +73,11 @@ const client = new Client({
 });
 
 client.on("messageCreate", async (message) => {
-  if (message.author?.bot) return;
+  // nunca apagar mensagens do PRÓPRIO bot
+  if (message.author?.id === client.user.id) return;
+
   if (!ALLOWED_CHANNELS.has(message.channelId)) return;
 
-  // Se não for uma hora permitida, apagar logo
   if (!shouldKeepMessage(message)) {
     await safeDelete(message);
   }
